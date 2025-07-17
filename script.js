@@ -4,9 +4,9 @@ const micBtn = document.getElementById("mic-button");
 const uploadBtn = document.getElementById("upload-button");
 const fileInput = document.getElementById("file-input");
 const sendBtn = document.querySelector(".chat-form button[type='submit']");
-const historyList = document.getElementById("history-list"); // 🆕 Add history panel element
+const historyList = document.getElementById("history-list"); //  Add history panel element
 
-// 🔷 Replace with your Gemini 2.5 Pro API Key
+//  Replace with your Gemini 2.5 Pro API Key
 const API_KEY = "AIzaSyCowaiAlyBEeJ2pTyeGnvni56Mu-J4-n1A";
 const MODEL = "gemini-2.5-pro";
 const API_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${API_KEY}`;
@@ -69,7 +69,7 @@ const handleSend = (e) => {
     if (!userText) return;
 
     createMessageElement(userText, "user-message");
-    addToHistory(userText); // 🆕 add to history
+    addToHistory(userText); //  add to history
 
     const botDiv = createMessageElement("...", "bot-message thinking");
     botDiv.querySelector(".message-text").innerHTML = `
@@ -82,7 +82,7 @@ const handleSend = (e) => {
     sendToGemini(userText, botDiv);
 };
 
-// 🎤 Speech recognition
+//  Speech recognition
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -95,7 +95,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     };
 }
 
-// 📁 File upload menu
+//  File upload menu
 uploadBtn.addEventListener("click", () => {
     const menu = document.createElement("div");
     menu.style.position = "absolute";
@@ -143,7 +143,7 @@ fileInput.addEventListener("change", () => {
     }
 });
 
-// 🔷 Send on button click / Enter
+//  Send on button click / Enter
 sendBtn.addEventListener("click", handleSend);
 messageInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") handleSend(e);
