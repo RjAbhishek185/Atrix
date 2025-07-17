@@ -19,7 +19,7 @@ Technologies Used
 
 Getting Started
 Clone this repository:
-*git clone https://github.com/your-username/atrix-chatbot.git cd atrix-chatbot
+*git clone https://github.com/RjAbhishek185/atrix-chatbot.git cd atrix-chatbot
 *Open index.html in a web browser.
 *Configure your API key:
 -Open the main JavaScript file.
