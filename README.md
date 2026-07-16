@@ -1,37 +1,84 @@
-Atrix Chatbot
-Atrix Chatbot is a web-based conversational AI assistant powered by Google Gemini 2.5 Pro API.It provides a clean, responsive, and user-friendly interface for interacting with AI directly from the browser.Atrix is designed to deliver structured, easy-to-read answers, while offering additional features to enhance usability and personalization.
+# Atrix – AI Medical Assistant
 
-Features
-*AI-powered conversational assistant using Gemini 2.5 Pro API
-*Nicely formatted, multi-paragraph responses for better readability
-*Maintains a session-based chat history, allowing users to revisit previous questions
-*Voice input support through the Web Speech API for hands-free interaction
-*File upload options with support for camera or device file selection
-*Login and signup functionality with basic local validation and session persistence
-*Displays a personalized profile icon after login
-*Minimal, accessible, and intuitive user interface
+Atrix is an AI-powered medical assistant that provides users with intelligent health guidance through an interactive chat interface. The application leverages Large Language Models (LLMs) and authentic medical references to deliver context-aware responses while offering a modern and responsive user experience.
 
-Technologies Used
-*HTML, CSS, JavaScript (Vanilla)
-*Google Gemini 2.5 Pro API for AI responses
-*Web Speech API for speech-to-text
-*LocalStorage for storing login state and history
+> **Disclaimer:** Atrix is intended for informational and educational purposes only. It does not replace professional medical advice, diagnosis, or treatment.
 
-Getting Started
-Clone this repository:
-*git clone https://github.com/RjAbhishek185/atrix-chatbot.git cd atrix-chatbot
-*Open index.html in a web browser.
-*Configure your API key:
--Open the main JavaScript file.
--Replace the placeholder YOUR_GEMINI_API_KEY with your valid Gemini 2.5 Pro API key.
-*Start interacting with the chatbot through the web interface.
+## Features
 
-Future Enhancements
+- AI-powered medical chatbot
+- Evidence-based responses using PubMed references
+- Interactive symptom assessment
+- Patient profile management
+- Medical report upload
+- Speech-to-Text and Text-to-Speech support
+- User authentication
+- Chat history management
+- Responsive and user-friendly interface
 
-Integration with a backend for secure authentication and persistent chat history.
-Support for multiple concurrent users and sessions.
-Enhanced UI themes, including a dark mode option.
-Improved error handling and rate-limiting feedback.
+## Technologies Used
 
-License
-This project is released under the MIT Licen
+- HTML5
+- CSS3
+- JavaScript (ES6)
+- Groq API
+- PubMed API
+- Web Speech API
+- Local Storage
+
+## Project Structure
+
+```
+Atrix
+│── index.html
+│── README.md
+│
+└── src
+    ├── css
+    │   └── style.css
+    │
+    └── js
+        ├── api.js
+        ├── app.js
+        ├── auth.js
+        ├── chat.js
+        ├── profile.js
+        ├── speech.js
+        ├── storage.js
+        ├── upload.js
+        ├── utils.js
+        └── wizard.js
+```
+
+## Getting Started
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/RjAbhishek185/Atrix.git
+```
+
+2. Open the project folder.
+
+3. Launch `index.html` in your browser or use the VS Code Live Server extension.
+
+4. Configure your Groq API key from the application's **Settings** page before using the chatbot.
+
+## Future Improvements
+
+- OCR support for medical reports
+- Appointment scheduling
+- Multi-language support
+- Cloud-based user authentication
+- Enhanced medical knowledge integration
+
+## Author
+
+**Abhishek Raj**
+
+- GitHub: https://github.com/RjAbhishek185
+- LinkedIn: https://www.linkedin.com/in/abhishek-raj-1589a62a1/
+
+## License
+
+This project is licensed under the MIT License.
