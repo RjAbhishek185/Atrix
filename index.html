@@ -2,70 +2,429 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Atrix Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atrix - Medical Assistant</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="src/css/style.css" />
+  <!-- Marked Library for rendering Markdown responses cleanly -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
 </head>
 <body>
+
+  <!-- Sidebar / History Panel -->
   <div class="history-panel">
-    <h2>History</h2>
-    <div id="history-list"></div>
+    <div class="brand-section">
+      <div class="brand-logo">
+        <i class="fas fa-hand-holding-medical"></i> Atrix
+      </div>
+      <div class="brand-badge">Medical AI</div>
+    </div>
+
+    <!-- Active Patient Profile Widget -->
+    <div class="profile-widget" id="profile-widget" onclick="openModal('profileModal')" title="View/Edit Patient Profile">
+      <div class="profile-avatar" id="widget-avatar">P</div>
+      <div class="profile-info" style="display: flex; flex-direction: column;">
+        <span class="profile-name" id="widget-name">Guest Patient</span>
+        <span style="font-size: 0.7rem; color: var(--text-muted);" id="widget-summary">No health profile set</span>
+      </div>
+    </div>
+
+    <h2><i class="fas fa-history"></i> Chat History</h2>
+    <div class="search-history-container" style="margin-bottom: 12px; position: relative;">
+      <input type="text" id="search-history" placeholder="Search chats (Ctrl + K)..." style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 8px; color: var(--text-main); font-size: 0.85rem;" />
+    </div>
+    <div id="history-list">
+      <!-- Chat history items will load here -->
+    </div>
+
+    <button class="action-btn" onclick="startNewChat()" style="margin-top: 10px; justify-content: center; width: 100%;">
+      <i class="fas fa-plus"></i> New Consultation
+    </button>
   </div>
 
+  <!-- Main Chat Container -->
   <div class="chat-container">
+    <!-- Urgent Medical Emergency Disclaimer Banner -->
+    <div class="emergency-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span><strong>EMERGENCY NOTICE:</strong> Atrix is an AI assistant, not a doctor. If you have severe pain, breathing difficulty, or an urgent emergency, call emergency services immediately.</span>
+    </div>
+
+    <!-- Chat Header -->
     <div class="chat-header">
-      Atrix Chatbot
-      <div class="auth-buttons">
-        <button onclick="showModal('login')">Login</button>
-        <button onclick="showModal('signup')">Signup</button>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.2rem; font-weight: 600; color: white;">Consultation Session</span>
+        <div id="connection-status" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted);">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-success); display: inline-block;"></span>
+          Secure & Grounded
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn primary" onclick="openSymptomWizard()">
+          <i class="fas fa-stethoscope"></i> Symptom Assessment
+        </button>
+        <button class="action-btn" onclick="openModal('settingsModal')" title="Settings">
+          <i class="fas fa-cog"></i> Settings
+        </button>
+        <button class="action-btn" id="auth-btn" onclick="openModal('loginModal')">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
       </div>
     </div>
+
+    <!-- API Key Missing Warning Bar -->
+    <div id="api-warning" class="api-warning-bar" style="display: none; margin: 16px 24px 0 24px;">
+      <span><i class="fas fa-exclamation-circle"></i> Groq API Key is not configured. The medical assistant requires an API key.</span>
+      <button onclick="openModal('settingsModal')">Configure Key</button>
+    </div>
+
+    <!-- Chat Body (Messages Area) -->
     <div class="chat-body" id="chat-body">
-      <div class="bot-message">
-        <div class="message-text">👋 Welcome to Atrix! How can I assist you today?</div>
+      <!-- Default Bot Greeting -->
+      <div class="message-wrapper bot-wrapper">
+        <div class="message-meta">
+          <i class="fas fa-robot"></i> Atrix Assistant &bull; Medical Assistant
+        </div>
+        <div class="message-box">
+          <p>👋 Hello, I am <strong>Atrix</strong>, your medical assistant.</p>
+          <p>I can help guide you through common symptoms and medical doubts. Unlike general search engines, my responses are tailored to be precise and are grounded in **medical publications and guidelines** (cites will be listed below when used).</p>
+          <p>How can I assist you with your health today? You can type your query below, upload a report, or use the <strong>Symptom Assessment</strong> tool at the top to complete a structured assessment.</p>
+        </div>
       </div>
     </div>
-    <form class="chat-form">
-      <input type="text" class="message-input" placeholder="Type your message..." required />
-      <button type="button" class="chat-button" id="mic-button" title="Voice">
-        <i class="fas fa-microphone"></i>
-      </button>
-      <button type="button" class="chat-button" id="upload-button" title="Upload File">
-        <i class="fas fa-paperclip"></i>
-      </button>
-      <input type="file" id="file-input" />
-      <button type="submit" class="chat-button" title="Send">
-        <i class="fas fa-paper-plane"></i>
-      </button>
-    </form>
+
+    <!-- File Upload Preview Bar -->
+    <div class="file-preview-bar" id="file-preview-bar">
+      <div class="file-preview-info">
+        <i class="fas fa-file-medical"></i>
+        <span id="file-preview-name">filename.pdf</span>
+      </div>
+      <i class="fas fa-times file-preview-remove" onclick="removeSelectedFile()" title="Remove file"></i>
+    </div>
+
+    <!-- Chat Form / Input Area -->
+    <div class="chat-form-container">
+      <form class="chat-form" id="chat-form" onsubmit="handleChatSubmit(event)">
+        <input type="text" class="message-input" id="message-input" placeholder="Describe symptoms or ask medical doubts..." required autocomplete="off" />
+        
+        <div class="input-actions">
+          <button type="button" class="chat-button" id="mic-button" onclick="toggleVoiceDictation()" title="Speak Symptoms">
+            <i class="fas fa-microphone"></i>
+          </button>
+          <button type="button" class="chat-button" id="upload-button" onclick="toggleUploadMenu(event)" title="Attach Document / Photo">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <button type="submit" class="chat-button submit-btn" title="Send Consultation Request">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+
+        <input type="file" id="file-input" style="display: none;" onchange="handleFileSelected(event)" />
+      </form>
+    </div>
   </div>
 
+  <!-- MODALS -->
+
+  <!-- 1. Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal('settingsModal')">&times;</span>
+      <h3><i class="fas fa-cog"></i> Configuration & Settings</h3>
+      
+      <div class="form-group">
+        <label for="settings-api-key">Groq API Key</label>
+        <input type="password" id="settings-api-key" placeholder="Enter gsk_..." />
+        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+          Stored locally in your browser. Get a key at <a href="https://console.groq.com/" target="_blank" style="color: var(--accent-secondary);">Groq Console</a>.
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="settings-model">Intelligence Model</label>
+        <select id="settings-model">
+          <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (Recommended)</option>
+          <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill</option>
+          <option value="gemma2-9b-it">Gemma 2 9B</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 10px;">
+        <label for="settings-tts" style="cursor: pointer;">Enable Text-to-Speech (Audio Output)</label>
+        <input type="checkbox" id="settings-tts" style="width: auto; cursor: pointer;" checked />
+      </div>
+
+      <button class="modal-action-btn" onclick="saveSettings()">
+        <i class="fas fa-save"></i> Save Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Patient Profile Modal -->
+  <div id="profileModal" class="modal">
+    <div class="modal-content" style="max-width: 550px;">
+      <span class="modal-close" onclick="closeModal('profileModal')">&times;</span>
+      <h3><i class="fas fa-id-card-alt"></i> Patient Health Profile</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+        Setting up your profile helps Atrix tailor guidance based on age, pre-existing conditions, or allergies. Data is saved locally in this browser.
+      </p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="prof-name">Full Name</label>
+          <input type="text" id="prof-name" placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+          <label for="prof-age">Age (Years)</label>
+          <input type="number" id="prof-age" placeholder="30" min="0" max="120" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="prof-sex">Biological Sex</label>
+          <select id="prof-sex">
+            <option value="">Select...</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="prof-mobile">Mobile (Optional)</label>
+          <input type="tel" id="prof-mobile" placeholder="+1234567890" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="prof-allergies">Known Allergies (e.g., Penicillin, Peanuts)</label>
+        <input type="text" id="prof-allergies" placeholder="List allergies or write 'None'" />
+      </div>
+
+      <div class="form-group">
+        <label for="prof-meds">Current Medications (e.g., Lisinopril, Metformin)</label>
+        <input type="text" id="prof-meds" placeholder="List active medications or write 'None'" />
+      </div>
+
+      <div class="form-group">
+        <label for="prof-conditions">Pre-existing Health Conditions (e.g., Asthma, Diabetes)</label>
+        <textarea id="prof-conditions" placeholder="Describe pre-existing conditions or write 'None'"></textarea>
+      </div>
+
+      <button class="modal-action-btn" onclick="savePatientProfile()">
+        <i class="fas fa-check-circle"></i> Save Patient Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. Auth Modal (Login / Sign Up) -->
   <div id="loginModal" class="modal">
     <div class="modal-content">
-      <h3>Login</h3>
-      <input type="text" placeholder="Username" />
-      <input type="password" placeholder="Password" />
-      <button onclick="closeModal()">Login</button>
+      <span class="modal-close" onclick="closeModal('loginModal')">&times;</span>
+      
+      <!-- Login Section -->
+      <div id="login-section">
+        <h3><i class="fas fa-lock"></i> Patient Portal Login</h3>
+        <div class="form-group">
+          <label for="login-user">Username</label>
+          <input type="text" id="login-user" placeholder="Enter username" />
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Password</label>
+          <input type="password" id="login-pass" placeholder="Enter password" />
+        </div>
+        <button class="modal-action-btn" onclick="handleAuthLogin()">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+        <p style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-muted);">
+          Don't have an account? <a href="javascript:void(0)" onclick="toggleAuthView('signup')" style="color: var(--accent-secondary);">Sign Up</a>
+        </p>
+      </div>
+
+      <!-- Signup Section -->
+      <div id="signup-section" style="display: none;">
+        <h3><i class="fas fa-user-plus"></i> Create Patient Account</h3>
+        <div class="form-group">
+          <label for="signup-user">Username</label>
+          <input type="text" id="signup-user" placeholder="Choose a username" />
+        </div>
+        <div class="form-group">
+          <label for="signup-name">Full Name</label>
+          <input type="text" id="signup-name" placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+          <label for="signup-pass">Password</label>
+          <input type="password" id="signup-pass" placeholder="Create password" />
+        </div>
+        <button class="modal-action-btn" onclick="handleAuthSignup()">
+          <i class="fas fa-user-check"></i> Sign Up
+        </button>
+        <p style="text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-muted);">
+          Already have an account? <a href="javascript:void(0)" onclick="toggleAuthView('login')" style="color: var(--accent-secondary);">Login</a>
+        </p>
+      </div>
     </div>
   </div>
 
-  <div id="signupModal" class="modal">
-    <div class="modal-content">
-      <h3>Create Your Profile</h3>
-      <input type="text" placeholder="Full Name" />
-      <input type="email" placeholder="Email" />
-      <input type="tel" placeholder="Mobile Number" />
-      <input type="text" placeholder="Username" />
-      <input type="password" placeholder="Password" />
-      <button onclick="closeModal()">Signup</button>
+  <!-- 4. Symptom Checker Wizard Modal -->
+  <div id="symptomWizardModal" class="modal">
+    <div class="modal-content" style="max-width: 580px;">
+      <span class="modal-close" onclick="closeModal('symptomWizardModal')">&times;</span>
+      <h3><i class="fas fa-stethoscope"></i> Symptom Assessment Wizard</h3>
+      
+      <!-- Progress Indicator -->
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-dot" id="dot-4">4</div>
+        <div class="step-dot" id="dot-5">5</div>
+      </div>
+
+      <!-- STEP 1: Basic Info -->
+      <div class="wizard-step active" id="step-1">
+        <h4 style="margin-bottom: 12px; color: white;">Step 1: What symptoms are you experiencing?</h4>
+        <div class="form-group">
+          <label for="wiz-symptoms">Primary Symptoms (e.g. Headache, Body aches, Fever)</label>
+          <textarea id="wiz-symptoms" placeholder="Describe in detail what you are feeling..." style="min-height: 100px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="wiz-duration">Duration</label>
+          <select id="wiz-duration">
+            <option value="A few hours">Just started (a few hours)</option>
+            <option value="1 day">1 day</option>
+            <option value="2-3 days" selected>2 to 3 days</option>
+            <option value="4-7 days">4 to 7 days</option>
+            <option value="More than a week">More than a week</option>
+            <option value="Chronic (Months/Years)">Chronic (Months / Years)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STEP 2: Severity & Severity -->
+      <div class="wizard-step" id="step-2">
+        <h4 style="margin-bottom: 12px; color: white;">Step 2: Severity & Progression</h4>
+        <div class="form-group">
+          <label>How severe is your primary symptom?</label>
+          <div class="choice-grid">
+            <div class="choice-card" onclick="selectSeverity('Mild')" id="sev-Mild">
+              <i class="fas fa-smile" style="color: var(--accent-success); margin-bottom: 6px; font-size: 1.2rem;"></i><br>
+              <strong>Mild</strong><br><span style="font-size:0.75rem; color:var(--text-muted)">Noticeable but doesn't disrupt tasks</span>
+            </div>
+            <div class="choice-card" onclick="selectSeverity('Moderate')" id="sev-Moderate">
+              <i class="fas fa-meh" style="color: var(--accent-warning); margin-bottom: 6px; font-size: 1.2rem;"></i><br>
+              <strong>Moderate</strong><br><span style="font-size:0.75rem; color:var(--text-muted)">Disrupts daily activities somewhat</span>
+            </div>
+            <div class="choice-card" onclick="selectSeverity('Severe')" id="sev-Severe" style="grid-column: span 2; margin-top: 4px;">
+              <i class="fas fa-frown" style="color: var(--accent-danger); margin-bottom: 6px; font-size: 1.2rem;"></i><br>
+              <strong>Severe</strong><br><span style="font-size:0.75rem; color:var(--text-muted)">Extremely painful, completely disabling</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Is the symptom improving or worsening?</label>
+          <div style="display: flex; gap: 20px; margin-top: 4px;">
+            <label style="display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 0.9rem; cursor: pointer;">
+              <input type="radio" name="wiz-progression" value="Improving" style="width: auto;" /> Improving
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 0.9rem; cursor: pointer;">
+              <input type="radio" name="wiz-progression" value="Unchanged" style="width: auto;" checked /> Unchanged
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 0.9rem; cursor: pointer;">
+              <input type="radio" name="wiz-progression" value="Worsening" style="width: auto;" /> Worsening
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Associated Symptoms -->
+      <div class="wizard-step" id="step-3">
+        <h4 style="margin-bottom: 12px; color: white;">Step 3: Associated Symptoms</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Select any other symptoms you are experiencing:</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <label style="display: flex; align-items: center; gap: 8px; text-transform:none; font-size: 0.9rem; cursor:pointer;">
+            <input type="checkbox" class="wiz-assoc" value="Fever" style="width:auto;" /> Fever / Chills
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; text-transform:none; font-size: 0.9rem; cursor:pointer;">
+            <input type="checkbox" class="wiz-assoc" value="Nausea/Vomiting" style="width:auto;" /> Nausea / Vomiting
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; text-transform:none; font-size: 0.9rem; cursor:pointer;">
+            <input type="checkbox" class="wiz-assoc" value="Fatigue" style="width:auto;" /> Muscle weakness / Fatigue
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; text-transform:none; font-size: 0.9rem; cursor:pointer;">
+            <input type="checkbox" class="wiz-assoc" value="Dizziness" style="width:auto;" /> Dizziness / Lightheadedness
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; text-transform:none; font-size: 0.9rem; cursor:pointer;">
+            <input type="checkbox" class="wiz-assoc" value="Cough/Sore Throat" style="width:auto;" /> Cough / Sore Throat
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; text-transform:none; font-size: 0.9rem; cursor:pointer;">
+            <input type="checkbox" class="wiz-assoc" value="Stiff Neck" style="width:auto;" /> Stiff Neck
+          </label>
+        </div>
+      </div>
+
+      <!-- STEP 4: Safety & Red Flags -->
+      <div class="wizard-step" id="step-4">
+        <h4 style="margin-bottom: 8px; color: var(--accent-danger);"><i class="fas fa-exclamation-triangle"></i> Step 4: Red Flag Verification</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+          Do you or the patient experience any of the following signs? Checking these indicates critical conditions that require immediate emergency care.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; text-transform:none; font-size: 0.9rem; cursor:pointer; color: #fca5a5;">
+            <input type="checkbox" class="wiz-flags" value="Chest Pain" style="width:auto; margin-top: 3px;" /> 
+            <strong>Chest pain, tightness, or pressure</strong>
+          </label>
+          <label style="display: flex; align-items: flex-start; gap: 10px; text-transform:none; font-size: 0.9rem; cursor:pointer; color: #fca5a5;">
+            <input type="checkbox" class="wiz-flags" value="Severe Shortness of Breath" style="width:auto; margin-top: 3px;" /> 
+            <strong>Severe shortness of breath or difficulty breathing</strong>
+          </label>
+          <label style="display: flex; align-items: flex-start; gap: 10px; text-transform:none; font-size: 0.9rem; cursor:pointer; color: #fca5a5;">
+            <input type="checkbox" class="wiz-flags" value="Sudden numbness or paralysis" style="width:auto; margin-top: 3px;" /> 
+            <strong>Sudden numbness, weakness in face, arm, or leg (especially one side)</strong>
+          </label>
+          <label style="display: flex; align-items: flex-start; gap: 10px; text-transform:none; font-size: 0.9rem; cursor:pointer; color: #fca5a5;">
+            <input type="checkbox" class="wiz-flags" value="Confusion/Difficulty speaking" style="width:auto; margin-top: 3px;" /> 
+            <strong>Sudden confusion, difficulty speaking, or slurred speech</strong>
+          </label>
+          <label style="display: flex; align-items: flex-start; gap: 10px; text-transform:none; font-size: 0.9rem; cursor:pointer; color: #fca5a5;">
+            <input type="checkbox" class="wiz-flags" value="None of these" id="flags-none" style="width:auto; margin-top: 3px;" checked onclick="toggleNoFlags(this)" /> 
+            <span style="color: var(--text-main)">None of these critical red flag symptoms</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- STEP 5: Summary & Submit -->
+      <div class="wizard-step" id="step-5">
+        <h4 style="margin-bottom: 12px; color: white;">Step 5: Assessment Summary</h4>
+        <div id="wiz-summary-review" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; font-size: 0.9rem; line-height: 1.5; color: var(--text-muted); margin-bottom: 16px;">
+          <!-- Review text loads here dynamically -->
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+          By submitting this report, Atrix will formulate a customized query to evaluate your symptoms against medical publications.
+        </p>
+      </div>
+
+      <!-- Wizard Navigation Buttons -->
+      <div class="wizard-footer">
+        <button class="wizard-btn" id="wiz-prev-btn" onclick="wizardPrev()" disabled>Previous</button>
+        <button class="wizard-btn next-btn" id="wiz-next-btn" onclick="wizardNext()">Next</button>
+      </div>
     </div>
   </div>
-  
 
-<script src="script.js"></script>
+  <script src="src/js/utils.js"></script>
+  <script src="src/js/storage.js"></script>
+  <script src="src/js/api.js"></script>
+  <script src="src/js/auth.js"></script>
+  <script src="src/js/profile.js"></script>
+  <script src="src/js/speech.js"></script>
+  <script src="src/js/upload.js"></script>
+  <script src="src/js/wizard.js"></script>
+  <script src="src/js/chat.js"></script>
+  <script src="src/js/app.js"></script>
 </body>
 </html>
